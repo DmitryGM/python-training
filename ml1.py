@@ -25,30 +25,24 @@ def try_parse_to_float(string):
         return -1
 
 
-def csv_pandas_reader(filename):
-    """
-    Parse a csv file
-    """
-    df = pd.read_csv(filename, sep=';')
-    # print(df.head(0))
-    # print(df.info())
-    # print(df.describe())
-    # print(df['пол'].value_counts())
-    # print(df.mean())
-    # print("!!!")
-    return df
-
-
 def processing_city(column):
+    """
+    :return: 1 if city is St. Petersburg, else -- 0
+    """
     return column.map(lambda x: 1 if x == 'A' else 0)
 
 
 def processing_months(column):
-    # Родился в мае?
-    return column.map(lambda x: 1 if 5 == x else 0)
+    """
+    :return: Column filled 0 and 1
+    """
+    return column.map(lambda x: 1 if 6 <= x <= 8 else 0)
 
 
 def processing_floats(column):
+    """
+    :return: Column filled floats
+    """
     column = column.map(try_parse_to_float)
     try:
         mode = float((column.mode()[0]))
@@ -58,34 +52,35 @@ def processing_floats(column):
     return column.map(lambda x: mode if x == -1 else x)
 
 
-def processing_two_numbers(column):
-    pass
-
-
 def processing_beer_classifications(column):
+    """
+    :return: Column filled 0 and 1
+    """
     return column.map(lambda x: 0 if str(x) == '0' else 1)
 
 
 def df_pandas_processing(df):
+    """
+    Selecting features from data
+    :param df: DataFrame -- our data set
+    :return: DataFrame containing only selected features
+    """
     # print("df_pandas_processing:")
-
     # df['город рождения'] = df['город рождения'].apply(lambda x: 1 if x == 'A' else 0)
     # df['город учебы в школе'] = processing_city(df['город учебы в школе'])
     # df['месяц рождения'] = processing_months(df['месяц рождения'])
-
     # df['средний школьный балл(математика)'] = processing_floats(df['средний школьный балл(математика)'])
-
     # df['дорога до вуза(время)']
     # df['потребление пива'] = processing_beer_classifications(df['потребление пива'])
-
     # print(df.shape)
     # print(df.info())
 
+    # features:
     f1 = processing_floats(df['оценка по математике (школа)'])
     f2 = processing_floats(df['средний школьный балл(математика)'])
     f3 = processing_floats(df['рост'])
-    res = processing_floats(df['Y(оценка по математике в первом семестре)'])
-    return pd.concat([f1, f2, f3, res], axis=1)
+    y = processing_floats(df['Y(оценка по математике в первом семестре)'])
+    return pd.concat([f1, f2, f3, y], axis=1)
 
 
 def rmse(y_true, y_predict):
@@ -98,23 +93,27 @@ def rmse(y_true, y_predict):
 
 
 def learn_test(X, Y):
+    """
+    Split the set (X, Y) into parts of the same size
+    :param X: np.array
+    :param Y: np.array
+    :return: RMSE(y_test, Y_predict)
+    """
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.5)
     skm.fit(X_train, y_train)
     Y_predict = skm.predict(X_test)
-
     return rmse(y_test, Y_predict)
 
 
-df = csv_pandas_reader("students.csv")
+df = pd.read_csv("students.csv", sep=';')
 df = df_pandas_processing(df)
-print(df)
 
-a = df.values
-print(a)
+# getting np.array:
+array = df.values
 
 min_max_scaler = preprocessing.MinMaxScaler()
-X = min_max_scaler.fit_transform(a[:, :-1])
-Y = a[:, -1]
+X = min_max_scaler.fit_transform(array[:, :-1])
+Y = array[:, -1]
 print("X =")
 print(X)
 print("Y =")
