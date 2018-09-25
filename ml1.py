@@ -1,6 +1,12 @@
+import math
 import csv
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
+import patsy as pt
+import sklearn.linear_model as lm
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from pip.utils import encoding
 
@@ -9,9 +15,9 @@ pd.set_option('display.max_rows', 100)
 
 
 def try_parse_to_float(string):
-    '''
+    """
     :return: float(string)
-    '''
+    """
     try:
         x = float(str(string).replace(',', '.'))
         return x
@@ -82,6 +88,23 @@ def df_pandas_processing(df):
     return pd.concat([f1, f2, f3, res], axis=1)
 
 
+def rmse(y_true, y_predict):
+    """
+    :param y_true: Correct target values
+    :param y_predict: Estimated target values
+    :return: RMSE(y_true, y_predict)
+    """
+    return math.sqrt(mean_squared_error(y_true, y_predict))
+
+
+def learn_test(X, Y):
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.5)
+    skm.fit(X_train, y_train)
+    Y_predict = skm.predict(X_test)
+
+    return rmse(y_test, Y_predict)
+
+
 df = csv_pandas_reader("students.csv")
 df = df_pandas_processing(df)
 print(df)
@@ -97,19 +120,38 @@ print(X)
 print("Y =")
 print(Y)
 
+# (1) FILL:
+# scikit-learn:
+print('scikit-learn:')
+skm = lm.LinearRegression()
+skm.fit(X, Y)
+print([skm.intercept_, *skm.coef_])
+
+# statsmodels:
+print('statsmodels:')
+x_ = sm.add_constant(X)
+smm = sm.OLS(Y, x_)
+res = smm.fit()
+print(res.params)
 
 
-
-# print("X =")
-# print(X)
-# Xinv = np.linalg.inv(X)
-#
-# Xdot = np.dot(X, Xinv)
-
-#Xt = np.transpose(X)
+# (2) predict:
+Y_predict = skm.predict(X)
+print('Y_predict')
+print(Y_predict)
 
 
-# print(X)
-# #print(Xt)
-# print(Xinv)
-# print(Xdot)
+# (3) RMSE:
+print('RMSE:')
+print(rmse(Y, Y_predict))
+
+
+# (4) learn/test:
+print(learn_test(X, Y))
+
+
+# (5) CV:
+sum = 0
+for i in range(1000):
+    sum += learn_test(X, Y)
+print(sum / 1000)
