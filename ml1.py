@@ -82,17 +82,6 @@ def df_pandas_processing(df):
     return pd.concat([f1, f2, f3, res], axis=1)
 
 
-def norm(lst):
-    lst = list(map(lambda x: float(str(x).replace(",", ".")), lst))
-    maximum = max(lst)
-    minimum = min(lst)
-    # print("max = {0}".format(maximum))
-    # print("min = {0}".format(minimum))
-    # print()
-
-    return list(map(lambda x: round((x - minimum) / (maximum - minimum), 1), lst))
-
-
 df = csv_pandas_reader("students.csv")
 df = df_pandas_processing(df)
 print(df)
@@ -101,9 +90,14 @@ a = df.values
 print(a)
 
 min_max_scaler = preprocessing.MinMaxScaler()
-x_scaled = min_max_scaler.fit_transform(a)
-print("x_scaled =")
-print(x_scaled)
+X = min_max_scaler.fit_transform(a[:, :-1])
+Y = a[:, -1]
+print("X =")
+print(X)
+print("Y =")
+print(Y)
+
+
 
 
 # print("X =")
