@@ -1,19 +1,21 @@
 import csv
 import numpy as np
+import pandas as pd
 
 from pip.utils import encoding
 
 
-def csv_reader(file_obj):
+def csv_pandas_reader(filename):
     """
-    Read a csv file
+    Parse a csv file
     """
-    data = []
-
-    reader = csv.reader(file_obj, delimiter=';')
-    for row in reader:
-        data.append(row)
-    return data[1:]
+    df = pd.read_csv(filename, sep=';')
+    pd.set_option('display.max_columns', 100)
+    pd.set_option('display.max_rows', 100)
+    print(df.head(0))
+    print(df.info())
+    print("!!!")
+    return df
 
 
 def norm(lst):
@@ -69,15 +71,9 @@ def processing(data):
     return res[rows[:, np.newaxis], columns]
 
 
-csv_path = "students.csv"
-with open(csv_path, encoding='utf8') as f_obj:
-    data = csv_reader(f_obj)
+df = csv_pandas_reader("students.csv")
 
-res = processing(data)
-
-for row in res:
-    print('\t'.join(row))
-
+res = processing(df)
 
 X = np.array([[1, 4, 11],
               [5, 2, 23],
