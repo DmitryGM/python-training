@@ -1,14 +1,13 @@
 import math
 import csv
+import random
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
-import patsy as pt
 import sklearn.linear_model as lm
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
-from pip.utils import encoding
+
 
 pd.set_option('display.max_columns', 100)
 pd.set_option('display.max_rows', 100)
@@ -36,7 +35,8 @@ def processing_months(column):
     """
     :return: Column filled 0 and 1
     """
-    return column.map(lambda x: 1 if 6 <= x <= 8 else 0)
+    #return column.map(lambda x: 1 if 6 <= x <= 8 else 0)
+    return column.map(lambda x: random.randint(0,100))
 
 
 def processing_floats(column):
@@ -75,12 +75,15 @@ def df_pandas_processing(df):
     # print(df.shape)
     # print(df.info())
 
+
+
     # features:
     f1 = processing_floats(df['оценка по математике (школа)'])
-    f2 = processing_floats(df['средний школьный балл(математика)'])
-    f3 = processing_floats(df['рост'])
+    #f2 = processing_floats(df['средний школьный балл(математика)'])
+    #f3 = processing_floats(df['рост'])
+    #f4 = processing_months(df['месяц рождения'])
     y = processing_floats(df['Y(оценка по математике в первом семестре)'])
-    return pd.concat([f1, f2, f3, y], axis=1)
+    return pd.concat([f1, y], axis=1)
 
 
 def rmse(y_true, y_predict):
@@ -102,6 +105,7 @@ def learn_test(X, Y):
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.5)
     skm.fit(X_train, y_train)
     Y_predict = skm.predict(X_test)
+    # print([skm.intercept_, *skm.coef_])
     return rmse(y_test, Y_predict)
 
 
@@ -119,19 +123,13 @@ print(X)
 print("Y =")
 print(Y)
 
+
 # (1) FILL:
 # scikit-learn:
 print('scikit-learn:')
 skm = lm.LinearRegression()
 skm.fit(X, Y)
 print([skm.intercept_, *skm.coef_])
-
-# statsmodels:
-print('statsmodels:')
-x_ = sm.add_constant(X)
-smm = sm.OLS(Y, x_)
-res = smm.fit()
-print(res.params)
 
 
 # (2) predict:
@@ -151,6 +149,8 @@ print(learn_test(X, Y))
 
 # (5) CV:
 sum = 0
-for i in range(1000):
+n = 1000
+
+for i in range(n):
     sum += learn_test(X, Y)
-print(sum / 1000)
+print(sum / n)
