@@ -1,3 +1,4 @@
+import copy
 import math
 import csv
 import random
@@ -64,7 +65,10 @@ def processing_geners(column):
     #     print(set(lst))
     # print(s)
 
-    d = {'Drama': [], 'Horror': [], 'Short': [],
+    # 'Short': [],
+
+    d = {'Family': [],
+        'Drama': [], 'Horror': [],
          'Mystery': [], 'Documentary': [],
          'Comedy': []
          }
@@ -76,27 +80,40 @@ def processing_geners(column):
             else:
                 d[x].append(0)
 
-    return pd.DataFrame(data=d)
+    df = pd.DataFrame(data=d)
+    #print(df)
+    return df
 
 
 def processing_title_type(column):
-    s = set()
-    for string in column:
-        s |= {string}
-    print('set_title_type:')
-    print(s)
+    # s = set()
+    # for string in column:
+    #     s |= {string}
+    # print('set_title_type:')
+    # print(s)
+    #
+    # d = dict([(elem, []) for elem in s])
+    # print(d)
 
-    d = {'tvSeries': []}
+    d = {'Drama': [], 'Drama': [],
+         }
 
     for string in column:
         for x in d:
-            if x in string:
+            if x == string:
                 d[x].append(1)
             else:
                 d[x].append(0)
 
-    return pd.DataFrame(data=d)
+    df = pd.DataFrame(data=d)
+    print(df)
+    return df
 
+
+def processing_votes(num_votes, gender_voters):
+    a = list(map(lambda x: x[1]/x[0], list(zip(num_votes, gender_voters))))
+    print(a)
+    return pd.Series(a)
 
 
 def df_pandas_processing(df):
@@ -108,16 +125,93 @@ def df_pandas_processing(df):
 
     print("df_pandas_processing")
     # features:
-    f1 = processing_floats(df['runtimeMinutes']) # best feature
+
+    # best feature:
+    f1 = processing_floats(df['runtimeMinutes'])
 
     f2 = processing_geners(df['genres'])
 
-    f3 = processing_title_type(df['titleType'])
+    # f = processing_title_type(df['titleType'])
 
+    # f = processing_votes(df['numVotes'], df['genderVoters'])
     # f = processing_floats(df['titleLength']) # bad feature
     # f = processing_floats(df['Downloads'])
+    # f = processing_floats(df['worldPromotion'])
+
     y = processing_floats(df['averageRating'])
-    return pd.concat([f1, f2, f3, y], axis=1)
+    return pd.concat([f2, f1, y], axis=1)
+
+
+def df_pandas_processing_for(df):
+    """
+    Selecting features from data
+    :param df: DataFrame -- our data set
+    :return: DataFrame containing only selected features
+    """
+
+
+    # #'Family': [],
+    #     'Drama': [], 'Horror': [],
+    #      'Mystery': [], 'Documentary': [],
+    #      'Comedy': []
+
+    d_short = {'runtimeMinutes': [],
+               #'Family': []}
+               #'Drama': [],
+               'Horror': []}
+               #'Mystery': [],
+               #'Documentary': [],
+               #'Comedy': []}
+    d_not_short = copy.deepcopy(d_short)
+
+
+    target = processing_floats(df['averageRating'])
+
+    for i in range(len(df)):
+        # best feature:
+        runtimeMinutes = try_parse_to_float(df['runtimeMinutes'][i])
+
+        if df['titleType'][i] == 'short':
+            d_not_short['runtimeMinutes'].append(0)
+            d_not_short['Horror'].append(0)
+
+            d_short['runtimeMinutes'].append(runtimeMinutes)
+
+            if 'Horror' in df['genres'][i]:
+                d_short['Horror'].append(1)
+            else:
+                d_short['Horror'].append(0)
+        else:
+            d_short['runtimeMinutes'].append(0)
+            d_short['Horror'].append(0)
+
+            d_not_short['runtimeMinutes'].append(runtimeMinutes)
+
+            if 'Horror' in df['genres'][i]:
+                d_not_short['Horror'].append(1)
+            else:
+                d_not_short['Horror'].append(0)
+
+
+    f_genres = processing_geners(df['genres'])
+
+    df_short = pd.DataFrame(data=d_short)
+    df_not_short = pd.DataFrame(data=d_not_short)
+
+    df_short['runtimeMinutes'] = processing_floats(df_short['runtimeMinutes'])
+    df_not_short['runtimeMinutes'] = processing_floats(df_not_short['runtimeMinutes'])
+
+
+    # f2 = processing_geners(df['genres'])
+
+    # f = processing_title_type(df['titleType'])
+
+    # f = processing_votes(df['numVotes'], df['genderVoters'])
+    # f = processing_floats(df['titleLength']) # bad feature
+    # f = processing_floats(df['Downloads'])
+    # f = processing_floats(df['worldPromotion'])
+
+    return pd.concat([df_short, df_not_short, target], axis=1)
 
 
 def rmse(y_true, y_predict):
@@ -156,8 +250,11 @@ def get_coef(X, Y):
     return ([skm.intercept_, *skm.coef_])
 
 
-df = pd.read_csv("train.csv", sep=',')
+df_predict = pd.read_csv('test.csv', sep=',')
+
+df = pd.read_csv('train.csv', sep=',')
 df = df_pandas_processing(df)
+
 
 # getting np.array:
 array = df.values
@@ -186,6 +283,9 @@ Y_predict = skm.predict(X)
 print('Y_predict')
 print(Y_predict)
 
+# (2)*:
+
+Y_predict = skm.predict(X)
 
 # (3) RMSE:
 print('RMSE:')
@@ -211,6 +311,6 @@ print("---")
 stat = []
 
 for i in range(n):
-    stat.append(get_coef(X, Y)[0])
+    stat.append(get_coef(X, Y)[2])
 
 draw_hist(stat)
