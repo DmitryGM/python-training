@@ -58,18 +58,12 @@ def processing_floats(column):
 
 
 def processing_geners(column):
-    # s = set()
-    # for lst in column:
-    #     print(lst)
-    #     s |= set(list(lst))
-    #     print(set(lst))
-    # print(s)
-
-    # 'Short': [],
-
+    """ genre classification """
     d = {'Family': [],
-        'Drama': [], 'Horror': [],
-         'Mystery': [], 'Documentary': [],
+         'Drama': [],
+         'Horror': [],
+         'Mystery': [],
+         'Documentary': [],
          'Comedy': []
          }
 
@@ -80,23 +74,19 @@ def processing_geners(column):
             else:
                 d[x].append(0)
 
-    df = pd.DataFrame(data=d)
-    #print(df)
-    return df
+    return pd.DataFrame(data=d)
 
 
 def processing_title_type(column):
-    # s = set()
-    # for string in column:
-    #     s |= {string}
-    # print('set_title_type:')
-    # print(s)
-    #
-    # d = dict([(elem, []) for elem in s])
-    # print(d)
+    """ movie type clustering """
+    s = set()
+    for string in column:
+        s |= {string}
+    print('set_title_type:')
+    print(s)
 
-    d = {'Drama': [], 'Drama': [],
-         }
+    d = dict([(elem, []) for elem in s])
+    print(d)
 
     for string in column:
         for x in d:
@@ -123,95 +113,12 @@ def df_pandas_processing(df):
     :return: DataFrame containing only selected features
     """
 
-    print("df_pandas_processing")
     # features:
-
-    # best feature:
     f1 = processing_floats(df['runtimeMinutes'])
-
     f2 = processing_geners(df['genres'])
+    f3 = processing_title_type(df['titleType'])
 
-    # f = processing_title_type(df['titleType'])
-
-    # f = processing_votes(df['numVotes'], df['genderVoters'])
-    # f = processing_floats(df['titleLength']) # bad feature
-    # f = processing_floats(df['Downloads'])
-    # f = processing_floats(df['worldPromotion'])
-
-    y = processing_floats(df['averageRating'])
-    return pd.concat([f2, f1, y], axis=1)
-
-
-def df_pandas_processing_for(df):
-    """
-    Selecting features from data
-    :param df: DataFrame -- our data set
-    :return: DataFrame containing only selected features
-    """
-
-
-    # #'Family': [],
-    #     'Drama': [], 'Horror': [],
-    #      'Mystery': [], 'Documentary': [],
-    #      'Comedy': []
-
-    d_short = {'runtimeMinutes': [],
-               #'Family': []}
-               #'Drama': [],
-               'Horror': []}
-               #'Mystery': [],
-               #'Documentary': [],
-               #'Comedy': []}
-    d_not_short = copy.deepcopy(d_short)
-
-
-    target = processing_floats(df['averageRating'])
-
-    for i in range(len(df)):
-        # best feature:
-        runtimeMinutes = try_parse_to_float(df['runtimeMinutes'][i])
-
-        if df['titleType'][i] == 'short':
-            d_not_short['runtimeMinutes'].append(0)
-            d_not_short['Horror'].append(0)
-
-            d_short['runtimeMinutes'].append(runtimeMinutes)
-
-            if 'Horror' in df['genres'][i]:
-                d_short['Horror'].append(1)
-            else:
-                d_short['Horror'].append(0)
-        else:
-            d_short['runtimeMinutes'].append(0)
-            d_short['Horror'].append(0)
-
-            d_not_short['runtimeMinutes'].append(runtimeMinutes)
-
-            if 'Horror' in df['genres'][i]:
-                d_not_short['Horror'].append(1)
-            else:
-                d_not_short['Horror'].append(0)
-
-
-    f_genres = processing_geners(df['genres'])
-
-    df_short = pd.DataFrame(data=d_short)
-    df_not_short = pd.DataFrame(data=d_not_short)
-
-    df_short['runtimeMinutes'] = processing_floats(df_short['runtimeMinutes'])
-    df_not_short['runtimeMinutes'] = processing_floats(df_not_short['runtimeMinutes'])
-
-
-    # f2 = processing_geners(df['genres'])
-
-    # f = processing_title_type(df['titleType'])
-
-    # f = processing_votes(df['numVotes'], df['genderVoters'])
-    # f = processing_floats(df['titleLength']) # bad feature
-    # f = processing_floats(df['Downloads'])
-    # f = processing_floats(df['worldPromotion'])
-
-    return pd.concat([df_short, df_not_short, target], axis=1)
+    return pd.concat([f1, f2, f3], axis=1)
 
 
 def rmse(y_true, y_predict):
@@ -230,7 +137,7 @@ def learn_test(X, Y):
     :param Y: np.array
     :return: RMSE(y_test, Y_predict)
     """
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.5)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.1)
     skm.fit(X_train, y_train)
     Y_predict = skm.predict(X_test)
     # print([skm.intercept_, *skm.coef_])
@@ -244,7 +151,7 @@ def get_coef(X, Y):
     :param Y: np.array
     :return: coefs
     """
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.75)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.25)
     skm.fit(X_train, y_train)
 
     return ([skm.intercept_, *skm.coef_])
@@ -253,21 +160,16 @@ def get_coef(X, Y):
 df_predict = pd.read_csv('test.csv', sep=',')
 
 df = pd.read_csv('train.csv', sep=',')
+y = processing_floats(df['averageRating'])
 df = df_pandas_processing(df)
-
+df = pd.concat([df, y], axis=1)
 
 # getting np.array:
 array = df.values
 
-print(array[:5])
-
 min_max_scaler = preprocessing.MinMaxScaler()
 X = min_max_scaler.fit_transform(array[:, :-1])
 Y = array[:, -1]
-print("X =")
-print(X)
-print("Y =")
-print(Y)
 
 
 # (1) FILL:
@@ -284,8 +186,15 @@ print('Y_predict')
 print(Y_predict)
 
 # (2)*:
+def predict(df):
+    X = min_max_scaler.fit_transform(df.values[:, :])
+    res = skm.predict(X)
 
-Y_predict = skm.predict(X)
+    res_df = pd.DataFrame(res)
+    res_df.to_csv("foo.csv", sep=',')
+
+predict(df_pandas_processing(df_predict))
+
 
 # (3) RMSE:
 print('RMSE:')
@@ -298,19 +207,19 @@ print(learn_test(X, Y))
 
 # (5) CV:
 sum = 0
-n = 1000
+n = 10000
 
 for i in range(n):
     sum += learn_test(X, Y)
 print(sum / n)
 
 
-# ---
-print("---")
-
-stat = []
-
-for i in range(n):
-    stat.append(get_coef(X, Y)[2])
-
-draw_hist(stat)
+# # ---
+# print("---")
+#
+# stat = []
+#
+# for i in range(n):
+#     stat.append(get_coef(X, Y)[1])
+#
+# draw_hist(stat)
