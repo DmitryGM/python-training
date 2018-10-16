@@ -8,20 +8,11 @@ import sklearn.linear_model as lm
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
-import pylab as pl
 import scipy.stats as stats
 
 
 pd.set_option('display.max_columns', 100)
 pd.set_option('display.max_rows', 100)
-
-
-def draw_hist(list):
-    list = sorted(list)
-    fit = stats.norm.pdf(list, np.mean(list), np.std(list))  # this is a fitting indeed
-    pl.plot(list, fit, '-o')
-    pl.hist(list, density=True)
-    pl.show()
 
 
 def try_parse_to_float(string):
@@ -212,14 +203,3 @@ n = 10000
 for i in range(n):
     sum += learn_test(X, Y)
 print(sum / n)
-
-
-# # ---
-# print("---")
-#
-# stat = []
-#
-# for i in range(n):
-#     stat.append(get_coef(X, Y)[1])
-#
-# draw_hist(stat)
